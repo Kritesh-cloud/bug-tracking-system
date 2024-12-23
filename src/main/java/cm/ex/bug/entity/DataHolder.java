@@ -3,6 +3,8 @@ package cm.ex.bug.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "data_holder")
 @Getter
@@ -13,8 +15,8 @@ import lombok.*;
 public class DataHolder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String name;
 

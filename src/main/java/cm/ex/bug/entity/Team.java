@@ -44,4 +44,10 @@ public class Team {
             inverseJoinColumns = @JoinColumn(name = "member_id", updatable = true))
     private Set<User> teamMembers = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "team__invitation",
+            joinColumns = @JoinColumn(name = "team_id", updatable = true),
+            inverseJoinColumns = @JoinColumn(name = "member_id", updatable = true))
+    private Set<User> teamInvitations = new HashSet<>();
+
 }

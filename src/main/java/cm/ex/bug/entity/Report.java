@@ -30,11 +30,15 @@ public class Report {
     @JoinColumn(name = "reporter_id", referencedColumnName = "id")
     private User reporter;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "team_id", referencedColumnName = "id")
+    private Team team;
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "report__assignees",
             joinColumns = @JoinColumn(name = "report_id", updatable = true),
             inverseJoinColumns = @JoinColumn(name = "user_id", updatable = true))
-    private Set<User> teamMembers = new HashSet<>();
+    private Set<User> assignees = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "status_id", referencedColumnName = "id")

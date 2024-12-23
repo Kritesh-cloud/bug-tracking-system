@@ -41,13 +41,3 @@ public class User {
     private Set<Authority> authoritySet = new HashSet<>();
 
 }
-
-/*
-
-user
-file
-data holder
-team
-notification
-comments
-* */
