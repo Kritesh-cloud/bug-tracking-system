@@ -1,63 +1,264 @@
 package cm.ex.bug.service;
 
+import cm.ex.bug.entity.*;
+import cm.ex.bug.repository.*;
 import cm.ex.bug.request.CreateReportRequest;
 import cm.ex.bug.response.BasicResponse;
 import cm.ex.bug.response.ReportResponse;
+import cm.ex.bug.security.authentication.UserAuth;
 import cm.ex.bug.service.interfaces.ReportService;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class ReportServiceImpl implements ReportService {
+
+    @Autowired
+    private ReportRepository reportRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private FileRepository fileRepository;
+
+    @Autowired
+    private DataHolderRepository dataHolderRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
     @Override
-    public BasicResponse createReport(CreateReportRequest reportData, MultipartFile... files) {
-        return null;
+    public BasicResponse createReport(CreateReportRequest reportData, MultipartFile... files) throws IOException {
+        //transferring all string data from dto to report
+        Report report = modelMapper.map(reportData, Report.class);
+        report.setId(null);
+
+        //reporter and team for report
+        report.setReporter(getLoggedInUser());
+        report.setTeam(getTeamById(reportData.getTeamId()));
+
+        //report status and all data holders
+        report.setStatus(getStatusByName("new"));
+        report.setSeverity(getSeverityByName(reportData.getSeverity()));
+        report.setPriority(getPriorityByName(reportData.getPriority()));
+        report.setDueDate(dateTimeConverter(reportData.getDueDate()));
+
+        Set<File> fileSet = new HashSet<>();
+        for (MultipartFile file : files) {
+            String reportFile = Base64.getEncoder().encodeToString(file.getBytes());
+            File savedFile = new File(file.getOriginalFilename(),reportFile,file.getContentType());
+            //saving file in repository and saving that file in has set at same time
+            fileSet.add(fileRepository.save(savedFile));
+        }
+        // using previously saved has set for saving file save in report
+        report.setFileSet(fileSet);
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(true).code(200).message("Report created successfully").build();
     }
 
     @Override
     public List<ReportResponse> listReportByUser() {
-        return List.of();
+        User user = getLoggedInUser();
+        List<Report> reportList = reportRepository.findByReporter(user);
+        return reportList.isEmpty() ? List.of() : reportListToResponse(reportList);
     }
 
     @Override
     public List<ReportResponse> listReportByTeam(String teamId) {
-        return List.of();
+        Team team = getTeamById(teamId);
+        List<Report> reportList = reportRepository.findByTeam(team);
+        return reportList.isEmpty() ? List.of() : reportListToResponse(reportList);
     }
 
     @Override
-    public BasicResponse updateReportStatus(String status) {
-        return null;
+    public BasicResponse updateReportStatus(String reportId, String status) {
+        Report report = getReportById(reportId);
+        DataHolder dataStatus = getStatusByName(status);
+        report.setStatus(dataStatus);
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(true).code(200).message("Report status updated successfully").build();
     }
 
     @Override
-    public BasicResponse updateReportResolution(String resolution) {
-        return null;
+    public BasicResponse updateReportResolution(String reportId, String resolution) {
+        Report report = getReportById(reportId);
+        DataHolder dataResolution = getStatusByName(resolution);
+        report.setStatus(dataResolution);
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(true).code(200).message("Report resolution updated successfully").build();
     }
 
     @Override
-    public BasicResponse updateReportPriority(String priority) {
-        return null;
+    public BasicResponse updateReportPriority(String reportId, String priority) {
+        Report report = getReportById(reportId);
+        DataHolder dataPriority = getStatusByName(priority);
+        report.setStatus(dataPriority);
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(true).code(200).message("Report priority updated successfully").build();
     }
 
     @Override
-    public BasicResponse updateReportSeverity(String severity) {
-        return null;
+    public BasicResponse updateReportSeverity(String reportId, String severity) {
+        Report report = getReportById(reportId);
+        DataHolder dataSeverity = getStatusByName(severity);
+        report.setStatus(dataSeverity);
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(true).code(200).message("Report severity updated successfully").build();
     }
 
     @Override
-    public BasicResponse addFileToReport(String reportId, MultipartFile file) {
-        return null;
+    public BasicResponse addFileToReport(String reportId, MultipartFile file) throws IOException {
+        Report report = getReportById(reportId);
+        Set<File> fileSet = report.getFileSet();
+        String reportFile = Base64.getEncoder().encodeToString(file.getBytes());
+        File savedFile = new File(file.getOriginalFilename(),reportFile,file.getContentType());
+        fileSet.add(fileRepository.save(savedFile));
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(true).code(200).message("New file add to report successfully").build();
     }
 
     @Override
     public BasicResponse removeFileFromReport(String reportId, String fileId) {
-        return null;
+        Report report = getReportById(reportId);
+        //get file by id
+        Optional<File> file = fileRepository.findById(UUID.fromString(fileId));
+        if(file.isEmpty()) throw new NoSuchElementException("File not found");
+        //get set of file from report
+        Set<File> fileSet = report.getFileSet();
+        //and remove file from set files
+        fileSet.remove(file.get());
+        //now save that file set in report again and save
+        report.setFileSet(fileSet);
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(false).code(200).message("File removed from report successfully").build();
     }
 
     @Override
     public BasicResponse removeReport(String reportId) {
+        Report report = getReportById(reportId);
+        reportRepository.delete(report);
+        return BasicResponse.builder().status(true).result(false).code(200).message("Report removed successfully").build();
+    }
+
+    private User userRemovePassword(User user) {
+        return User.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .profileUrl(user.getProfileUrl())
+                .authoritySet(user.getAuthoritySet())
+                .build();
+    }
+
+    private Set<User> userListRemovePassword(Set<User> userSet) {
+        return userSet.stream().map(this::userRemovePassword).collect(Collectors.toSet());
+    }
+
+    private User getLoggedInUser() {
+        UserAuth userAuth = (UserAuth) SecurityContextHolder.getContext().getAuthentication();
+        return userAuth.getUser();
+    }
+
+    public User getUserById(String userId) {
+        Optional<User> user = userRepository.findById(UUID.fromString(userId));
+        if (user.isEmpty()) throw new NoSuchElementException("User not found");
+        return user.get();
+    }
+
+    public Team getTeamById(String teamId) {
+        Optional<Team> team = teamRepository.findById(UUID.fromString(teamId));
+        if (team.isEmpty()) throw new NoSuchElementException("Team not found");
+        return team.get();
+    }
+
+    private String extractFileId(String fileUrl) {
+        String uuidRegex = "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}";
+        Pattern pattern = Pattern.compile(uuidRegex);
+        Matcher matcher = pattern.matcher(fileUrl);
+        if (matcher.find()) {
+            return matcher.group();
+        }
         return null;
     }
+
+    private DataHolder getStatusByName(String name) {
+        return getDataHolderByName(name, "status");
+    }
+
+    private DataHolder getResolutionByName(String name) {
+        return getDataHolderByName(name, "resolution");
+    }
+
+    private DataHolder getSeverityByName(String name) {
+        return getDataHolderByName(name, "priority");
+    }
+
+    private DataHolder getPriorityByName(String name) {
+        return getDataHolderByName(name, "severity");
+    }
+
+    private DataHolder getDataHolderByName(String name, String type) {
+        Optional<DataHolder> dataHolder = dataHolderRepository.findByNameAndType(name, type);
+        if (dataHolder.isEmpty())
+            throw new NoSuchElementException("Data holder: " + type + "-" + name + " of not found");
+        return dataHolder.get();
+    }
+
+    private Report getReportById(String reportId){
+        Optional<Report> report = reportRepository.findById(UUID.fromString(reportId));
+        if(report.isEmpty()) throw new NoSuchElementException("Report not found");
+        return report.get();
+    }
+
+    private LocalDateTime dateTimeConverter(String strDateTime) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return LocalDateTime.parse(strDateTime, formatter);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Date time exception " + e);
+        }
+    }
+
+    private List<ReportResponse> reportListToResponse(List<Report> reportList) {
+        return reportList.stream()
+                .map(report -> {
+                    ReportResponse response = modelMapper.map(report, ReportResponse.class);
+
+                    response.setReporterId(String.valueOf(report.getReporter().getId()));
+                    response.setTeamId(String.valueOf(report.getTeam().getId()));
+                    response.setStatus(report.getStatus().getName());
+                    response.setResolution(report.getResolution().getName());
+                    response.setPriority(report.getPriority().getName());
+                    response.setSeverity(report.getSeverity().getName());
+
+                    // Simplified mapping for assignees and file IDs
+                    response.setAssigneesIds(report.getAssignees().stream()
+                            .map(user -> String.valueOf(user.getId()))
+                            .toList());
+
+                    response.setFileIds(report.getFileSet().stream()
+                            .map(file -> String.valueOf(file.getId()))
+                            .toList());
+
+                    return response;
+                })
+                .toList();
+    }
+
 }

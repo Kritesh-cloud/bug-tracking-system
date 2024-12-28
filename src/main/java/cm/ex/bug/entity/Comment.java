@@ -32,9 +32,10 @@ public class Comment {
     @JoinColumn(name = "report_id", referencedColumnName = "id")
     private Report report;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "team_id", referencedColumnName = "id")
-    private Team team;
+    // removed team for now as it doesn't seem to be necessary
+//    @OneToOne(cascade = CascadeType.ALL)
+//    @JoinColumn(name = "team_id", referencedColumnName = "id")
+//    private Team team;
 
     private LocalDateTime createdAt;
 
@@ -45,4 +46,17 @@ public class Comment {
             joinColumns = @JoinColumn(name = "comment_id", updatable = true),
             inverseJoinColumns = @JoinColumn(name = "user_id", updatable = true))
     private Set<User> userMentions = new HashSet<>();
+
+    public Comment(String content, User commenter, Report report) {
+        this.content = content;
+        this.commenter = commenter;
+        this.report = report;
+    }
+
+    public Comment(String content, User commenter, Report report, Set<User> userMentions) {
+        this.content = content;
+        this.commenter = commenter;
+        this.report = report;
+        this.userMentions = userMentions;
+    }
 }

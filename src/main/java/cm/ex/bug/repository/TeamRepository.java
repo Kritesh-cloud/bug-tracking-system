@@ -20,4 +20,10 @@ public interface TeamRepository extends JpaRepository<Team, UUID> {
     @Query("SELECT t FROM Team t JOIN t.teamMembers m WHERE m = :user ORDER BY t.updatedAt ASC")
     List<Team> findByTeamMembersContainingOrderByUpdatedAtAsc(@Param("user") User user);
 
+    @Query(value = "SELECT t.* FROM team t " +
+            "JOIN team__invitation ti ON t.id = ti.team_id " +
+            "JOIN users u ON ti.member_id = u.id " +
+            "WHERE u.id = :#{#user.id}", nativeQuery = true)
+    List<Team> findTeamsByInvitationUser(@Param("user") User user);
+
 }

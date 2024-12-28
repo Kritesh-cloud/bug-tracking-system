@@ -12,7 +12,7 @@ public interface FileService {
 
     public File addFile(MultipartFile file) throws IOException;
 
-    public Optional<File> getFileById(String id);
+    public File getFileById(String id);
 
     public List<File> listAllFiles();
 
@@ -20,5 +20,5 @@ public interface FileService {
 
     public List<File> listAllFilesByTeam(String teamId);
 
-    public BasicResponse removeFile(String imageId);
+    public BasicResponse removeFile(String fileId);
 }

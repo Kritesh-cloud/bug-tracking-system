@@ -1,9 +1,11 @@
 package cm.ex.bug.repository;
 
 
+import cm.ex.bug.entity.Team;
 import cm.ex.bug.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,4 +24,16 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                     "JOIN authority a ON ua.authority_id = a.id\n" +
                     "WHERE a.authority = 'admin'")
     List<User> listByUserAuthority(String authority);
+
+    // Get all users from the leader or teamMembers attributes of the Team entity
+    @Query("SELECT u FROM User u " +
+            "WHERE u.id = :#{#team.leader.id} " +
+            "OR u IN :#{#team.teamMembers}")
+    List<User> listUsersByTeam(@Param("team") Team team);
+
+    // Get all users from the leader or teamMembers attributes of the Team entity
+    @Query("SELECT u FROM User u " +
+            "WHERE u IN :#{#team.teamInvitations}")
+    List<User> findUsersByTeamInvitations(@Param("team") Team team);
+
 }

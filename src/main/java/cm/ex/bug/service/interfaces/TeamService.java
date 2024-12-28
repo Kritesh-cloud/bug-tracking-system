@@ -1,22 +1,40 @@
 package cm.ex.bug.service.interfaces;
 
 import cm.ex.bug.entity.Team;
+import cm.ex.bug.entity.TeamRole;
+import cm.ex.bug.request.CreateTeamRequest;
 import cm.ex.bug.response.BasicResponse;
+import cm.ex.bug.response.TeamResponse;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 public interface TeamService {
 
-    public BasicResponse createTeam(Team team);
+    public BasicResponse createTeam(CreateTeamRequest team);
 
-    public List<Team> listTeamByUser();
+    public List<TeamResponse> listTeamByUser();
 
-    public List<Team> listTeamInvitation();
+    public List<TeamResponse> listTeamInvitation(String userId);
 
-    public BasicResponse getTeamDetailById(String teamId);
+    public Team getTeamById(String teamId);
 
-    public BasicResponse updateTeam(Team team);
+    public TeamResponse getTeamDetailById(String teamId);
 
-    public BasicResponse inviteToTeam(String userId);
+    public List<TeamRole> listTeamRoleByTeam(String teamId);
+
+    public BasicResponse updateTeam(CreateTeamRequest team);
+
+    public BasicResponse inviteToTeam(String userId, String teamId);
+
+    public BasicResponse removeFromTeam(String userId, String teamId);
+
+    public BasicResponse acceptTeamInvitation(String teamId);
+
+    public BasicResponse declineTeamInvitation(String teamId);
+
+    public BasicResponse assignTeamRole(String userId, String teamId, String roleName) throws AccessDeniedException;
+
+    public BasicResponse leaveTeam(String teamId);
 
 }

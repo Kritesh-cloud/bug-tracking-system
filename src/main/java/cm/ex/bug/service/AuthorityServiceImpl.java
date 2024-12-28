@@ -9,6 +9,7 @@ import java.util.List;
 
 @Service
 public class AuthorityServiceImpl implements AuthorityService {
+
     @Override
     public Authority addAuthority(String authority) {
         return null;

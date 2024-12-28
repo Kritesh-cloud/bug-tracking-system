@@ -11,6 +11,7 @@ public interface AuthorityService {
 
     public List<Authority> listAuthority();
 
+
     public BasicResponse removeAuthority(String authority);
 
 }

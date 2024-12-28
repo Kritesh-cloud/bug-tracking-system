@@ -26,10 +26,6 @@ public class Team {
 
     private String description;
 
-    private String iconUrl;
-
-    private String backgroundUrl;
-
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

@@ -17,6 +17,10 @@ public class CreateReportRequest {
 
     private String teamId;
 
+    private String priority;
+
+    private String severity;
+
     private String stepsToReproduce;
 
     private String version;

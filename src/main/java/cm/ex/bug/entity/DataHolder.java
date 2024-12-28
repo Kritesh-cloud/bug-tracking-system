@@ -28,4 +28,9 @@ public class DataHolder {
 
     private boolean preBuild;
 
+    public DataHolder(String name, String type, boolean preBuild) {
+        this.name = name;
+        this.type = type;
+        this.preBuild = preBuild;
+    }
 }

@@ -20,10 +20,10 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
     @Query(nativeQuery = true, value = "SELECT c FROM comment c WHERE c.report = :report ORDER BY c.createdAt ASC")
     List<Comment> findByReport(Report report);
 
-    List<Comment> findByTeam(Team team);
+//    List<Comment> findByTeam(Team team);
 
     List<Comment> findByCommenterAndReport(User commenter, Report report);
 
-    List<Comment> findByReportAndTeam(Report report, Team team);
+//    List<Comment> findByReportAndTeam(Report report, Team team);
 
 }
