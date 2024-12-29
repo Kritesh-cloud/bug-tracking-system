@@ -7,9 +7,9 @@ import java.util.List;
 
 public interface NotificationService {
 
-    public BasicResponse createNotification();
+    public BasicResponse createNotification(String notification);
 
-    public BasicResponse createNotificationByTeam(String teamId);
+    public BasicResponse createNotificationByTeam(String teamId, String notification);
 
     public List<Notification> listUserNotification();
 

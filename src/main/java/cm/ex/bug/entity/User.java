@@ -40,4 +40,18 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "authority_id", updatable = true))
     private Set<Authority> authoritySet = new HashSet<>();
 
+    public User(String name, String email, String password, String profileUrl) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.profileUrl = profileUrl;
+    }
+
+    public User(String name, String email, String password, String profileUrl, Set<Authority> authoritySet) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.profileUrl = profileUrl;
+        this.authoritySet = authoritySet;
+    }
 }

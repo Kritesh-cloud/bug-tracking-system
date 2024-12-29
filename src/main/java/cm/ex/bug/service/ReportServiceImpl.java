@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.NotActiveException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -62,7 +63,7 @@ public class ReportServiceImpl implements ReportService {
         Set<File> fileSet = new HashSet<>();
         for (MultipartFile file : files) {
             String reportFile = Base64.getEncoder().encodeToString(file.getBytes());
-            File savedFile = new File(file.getOriginalFilename(),reportFile,file.getContentType());
+            File savedFile = new File(file.getOriginalFilename(), reportFile, file.getContentType());
             //saving file in repository and saving that file in has set at same time
             fileSet.add(fileRepository.save(savedFile));
         }
@@ -71,6 +72,12 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.save(report);
         return BasicResponse.builder().status(true).result(true).code(200).message("Report created successfully").build();
     }
+
+    @Override
+    public ReportResponse getReportDetailById(String reportId) {
+        return reportToResponse(getReportById(reportId));
+    }
+
 
     @Override
     public List<ReportResponse> listReportByUser() {
@@ -84,6 +91,42 @@ public class ReportServiceImpl implements ReportService {
         Team team = getTeamById(teamId);
         List<Report> reportList = reportRepository.findByTeam(team);
         return reportList.isEmpty() ? List.of() : reportListToResponse(reportList);
+    }
+
+    //TODO work on progress
+    @Override
+    public BasicResponse updateReport(CreateReportRequest reportData, MultipartFile... files) throws IOException {
+        //transferring all string data from dto to report
+        Report report = modelMapper.map(reportData, Report.class);
+
+        //reporter and team for report
+        report.setReporter(getLoggedInUser());
+        report.setTeam(getTeamById(reportData.getTeamId()));
+
+        //report status and all data holders
+        report.setStatus(getStatusByName("new"));
+        report.setSeverity(getSeverityByName(reportData.getSeverity()));
+        report.setPriority(getPriorityByName(reportData.getPriority()));
+        report.setDueDate(dateTimeConverter(reportData.getDueDate()));
+
+        for (String removeFile : reportData.getRemoveFileIds()) {
+            Optional<File> removeThisFile = fileRepository.findById(UUID.fromString(removeFile));
+            if (removeThisFile.isEmpty()) throw new NotActiveException("File not found");
+
+
+        }
+
+        Set<File> fileSet = new HashSet<>(report.getFileSet());
+        for (MultipartFile file : files) {
+            String reportFile = Base64.getEncoder().encodeToString(file.getBytes());
+            File savedFile = new File(file.getOriginalFilename(), reportFile, file.getContentType());
+            //saving file in repository and saving that file in has set at same time
+            fileSet.add(fileRepository.save(savedFile));
+        }
+        // using previously saved has set for saving file save in report
+        report.setFileSet(fileSet);
+        reportRepository.save(report);
+        return BasicResponse.builder().status(true).result(true).code(200).message("Report updated successfully").build();
     }
 
     @Override
@@ -127,7 +170,7 @@ public class ReportServiceImpl implements ReportService {
         Report report = getReportById(reportId);
         Set<File> fileSet = report.getFileSet();
         String reportFile = Base64.getEncoder().encodeToString(file.getBytes());
-        File savedFile = new File(file.getOriginalFilename(),reportFile,file.getContentType());
+        File savedFile = new File(file.getOriginalFilename(), reportFile, file.getContentType());
         fileSet.add(fileRepository.save(savedFile));
         reportRepository.save(report);
         return BasicResponse.builder().status(true).result(true).code(200).message("New file add to report successfully").build();
@@ -138,7 +181,7 @@ public class ReportServiceImpl implements ReportService {
         Report report = getReportById(reportId);
         //get file by id
         Optional<File> file = fileRepository.findById(UUID.fromString(fileId));
-        if(file.isEmpty()) throw new NoSuchElementException("File not found");
+        if (file.isEmpty()) throw new NoSuchElementException("File not found");
         //get set of file from report
         Set<File> fileSet = report.getFileSet();
         //and remove file from set files
@@ -220,9 +263,9 @@ public class ReportServiceImpl implements ReportService {
         return dataHolder.get();
     }
 
-    private Report getReportById(String reportId){
+    private Report getReportById(String reportId) {
         Optional<Report> report = reportRepository.findById(UUID.fromString(reportId));
-        if(report.isEmpty()) throw new NoSuchElementException("Report not found");
+        if (report.isEmpty()) throw new NoSuchElementException("Report not found");
         return report.get();
     }
 
@@ -235,28 +278,32 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    private ReportResponse reportToResponse(Report report) {
+        ReportResponse response = modelMapper.map(report, ReportResponse.class);
+
+        response.setReporterId(String.valueOf(report.getReporter().getId()));
+        response.setTeamId(String.valueOf(report.getTeam().getId()));
+        response.setStatus(report.getStatus().getName());
+        response.setResolution(report.getResolution().getName());
+        response.setPriority(report.getPriority().getName());
+        response.setSeverity(report.getSeverity().getName());
+
+        // Simplified mapping for assignees and file IDs
+        response.setAssigneesIds(report.getAssignees().stream()
+                .map(user -> String.valueOf(user.getId()))
+                .toList());
+
+        response.setFileIds(report.getFileSet().stream()
+                .map(file -> String.valueOf(file.getId()))
+                .toList());
+
+        return response;
+    }
+
     private List<ReportResponse> reportListToResponse(List<Report> reportList) {
         return reportList.stream()
                 .map(report -> {
-                    ReportResponse response = modelMapper.map(report, ReportResponse.class);
-
-                    response.setReporterId(String.valueOf(report.getReporter().getId()));
-                    response.setTeamId(String.valueOf(report.getTeam().getId()));
-                    response.setStatus(report.getStatus().getName());
-                    response.setResolution(report.getResolution().getName());
-                    response.setPriority(report.getPriority().getName());
-                    response.setSeverity(report.getSeverity().getName());
-
-                    // Simplified mapping for assignees and file IDs
-                    response.setAssigneesIds(report.getAssignees().stream()
-                            .map(user -> String.valueOf(user.getId()))
-                            .toList());
-
-                    response.setFileIds(report.getFileSet().stream()
-                            .map(file -> String.valueOf(file.getId()))
-                            .toList());
-
-                    return response;
+                    return reportToResponse(report);
                 })
                 .toList();
     }

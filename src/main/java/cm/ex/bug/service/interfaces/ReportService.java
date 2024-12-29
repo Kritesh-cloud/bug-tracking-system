@@ -14,9 +14,13 @@ public interface ReportService {
 
     public BasicResponse createReport(CreateReportRequest reportData, MultipartFile... files) throws IOException;
 
+    public ReportResponse getReportDetailById(String reportId);
+
     public List<ReportResponse> listReportByUser();
 
     public List<ReportResponse> listReportByTeam(String teamId);
+
+    public BasicResponse updateReport(CreateReportRequest reportData, MultipartFile... files) throws IOException;
 
     public BasicResponse updateReportStatus(String reportId, String status);
 

@@ -13,7 +13,7 @@ public interface UserService {
 
     public BasicResponse signUp(CreateUserRequest user, MultipartFile profileImage) throws IOException;
 
-    public BasicResponse logIn(User user);
+    public BasicResponse logIn(CreateUserRequest user);
 
     public User userInfo();
 

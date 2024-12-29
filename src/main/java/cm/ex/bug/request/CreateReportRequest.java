@@ -28,4 +28,6 @@ public class CreateReportRequest {
     private String environment;
 
     private String dueDate;
-}
+
+    private String[] removeFileIds;
+ }

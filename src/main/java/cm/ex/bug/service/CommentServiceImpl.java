@@ -5,6 +5,7 @@ import cm.ex.bug.entity.Report;
 import cm.ex.bug.entity.Team;
 import cm.ex.bug.entity.User;
 import cm.ex.bug.repository.*;
+import cm.ex.bug.request.CommentRequest;
 import cm.ex.bug.response.BasicResponse;
 import cm.ex.bug.response.CommentResponse;
 import cm.ex.bug.security.authentication.UserAuth;
@@ -43,10 +44,10 @@ public class CommentServiceImpl implements CommentService {
     private ModelMapper modelMapper;
 
     @Override
-    public BasicResponse createComment(String reportId, String comment) {
+    public BasicResponse createComment(CommentRequest commentRequest) {
         User commenter = getLoggedInUser();
-        Report report = getReportById(reportId);
-        commentRepository.save(new Comment(comment, commenter, report));
+        Report report = getReportById(commentRequest.getReportId());
+        commentRepository.save(new Comment(commentRequest.getContent(), commenter, report));
         return BasicResponse.builder().status(true).result(true).code(200).message("Comment created successfully").build();
     }
 
@@ -58,15 +59,15 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public BasicResponse updateComment(String commentId, String comment) {
+    public BasicResponse updateComment(CommentRequest commentRequest) {
         User commenter = getLoggedInUser();
-        Optional<Comment> userComment = commentRepository.findById(UUID.fromString(commentId));
+        Optional<Comment> userComment = commentRepository.findById(UUID.fromString(commentRequest.getCommenterId()));
         if (userComment.isEmpty()) throw new NoSuchElementException("Comment not found");
 
         List<Comment> commentList = commentRepository.findByCommenter(commenter);
         if (!commentList.contains(userComment.get())) throw new AccessDeniedException("Unauthorized for modification");
 
-        userComment.get().setContent(comment);
+        userComment.get().setContent(commentRequest.getContent());
         commentRepository.save(userComment.get());
 
         return BasicResponse.builder().status(true).result(true).code(200).message("Comment updated successfully").build();

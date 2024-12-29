@@ -58,21 +58,26 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public BasicResponse signUp(CreateUserRequest user, MultipartFile profileImage) throws IOException {
         User userData = modelMapper.map(user, User.class);
-        File profile = fileService.addFile(profileImage);
         userData.setPassword(passwordEncoder.encode(userData.getPassword()));
         userData.setAuthoritySet(Set.of(authorityRepository.findByAuthority("user").get()));
-        userData.setProfileUrl("http://localhost:8080/image/" + profile.getId());
+
+        if (!Objects.requireNonNull(profileImage.getOriginalFilename()).isEmpty()){
+            File profile = fileService.addFile(profileImage);
+            userData.setProfileUrl("http://localhost:8080/image/" + profile.getId());
+        }
+
         userRepository.save(userData);
         return BasicResponse.builder().status(true).result(true).code(200).message("Account created successfully").build();
     }
 
     @Override
-    public BasicResponse logIn(User user) {
+    public BasicResponse logIn(CreateUserRequest user) {
         Optional<User> userEmail = userRepository.findByEmail(user.getEmail());
         if (userEmail.isEmpty() || !passwordEncoder.matches(user.getPassword(), userEmail.get().getPassword()))
             return BasicResponse.builder().status(false).code(401).message("Email or password doesn't match").build();
 
-        UserAuth userAuth = new UserAuth(user.getId().toString(), true, user.getEmail(), user.getPassword(), null, user.getPassword(), convertToGrantedAuthorities(user.getAuthoritySet()), null);
+        UserAuth userAuth = new UserAuth(user.getId().toString(), true, user.getEmail(), user.getPassword(), null, user.getPassword(), convertToGrantedAuthorities(userEmail.get().
+                getAuthoritySet()), null);
         String jwtToken = jwtService.generateToken(userAuth);
 
         return BasicResponse.builder().status(true).code(200).message("Successfully logged in").token(jwtToken).build();

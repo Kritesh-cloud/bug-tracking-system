@@ -37,4 +37,6 @@ public interface TeamService {
 
     public BasicResponse leaveTeam(String teamId);
 
+    public BasicResponse deleteTeam(String teamId) throws AccessDeniedException;
+
 }

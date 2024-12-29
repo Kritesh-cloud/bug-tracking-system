@@ -183,6 +183,17 @@ public class TeamServiceImpl implements TeamService {
         return BasicResponse.builder().status(true).result(false).code(200).message("User left the team successfully").build();
     }
 
+    @Override
+    public BasicResponse deleteTeam(String teamId) throws AccessDeniedException {
+        User user = getLoggedInUser();
+        Team team = getTeamById(teamId);
+        if (!team.getLeader().equals(user)) throw new AccessDeniedException("Unauthorized to delete team");
+
+        teamRepository.delete(team);
+        return BasicResponse.builder().status(true).result(false).code(200).message("Team deleted successfully").build();
+
+    }
+
     private User userRemovePassword(User user) {
         return User.builder()
                 .id(user.getId())
