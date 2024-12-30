@@ -2,8 +2,11 @@ package cm.ex.bug.configuration.data;
 
 import cm.ex.bug.entity.Authority;
 import cm.ex.bug.entity.DataHolder;
+import cm.ex.bug.entity.Team;
 import cm.ex.bug.entity.User;
 import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +17,9 @@ import java.util.Set;
 @ToString
 @AllArgsConstructor
 public class DataHolderData {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<Authority> authorityList = new ArrayList<>();
 
@@ -26,6 +32,8 @@ public class DataHolderData {
     public User admin;
     public User moderator;
     public List<User> userList = new ArrayList<>();
+
+    public List<Team> teamList = new ArrayList<>();
 
 
     public DataHolderData() {
@@ -77,6 +85,18 @@ public class DataHolderData {
         userList.add(new User("User Nine", "user9@gmail.com", "password", ""));
         userList.add(new User("User Ten", "user10@gmail.com", "password", ""));
 
+
+        teamList.add(new Team("Apple Team","A for Apple",new User("user1@gmail.com")));
+        teamList.add(new Team("Ball Team","B for Ball",new User("user1@gmail.com")));
+        teamList.add(new Team("Cat Team","C for Cat",new User("user1@gmail.com")));
+        teamList.add(new Team("Dog Team","D for Dog",new User("user1@gmail.com")));
+        teamList.add(new Team("Elephant Team","E for Elephant",new User("user1@gmail.com")));
+
+        teamList.add(new Team("Fox Team","F for Fox",new User("user2@gmail.com")));
+        teamList.add(new Team("Goat Team","G for Goat",new User("user2@gmail.com")));
+        teamList.add(new Team("Hen Team","H for Hen",new User("user2@gmail.com")));
+        teamList.add(new Team("Ice Team","I for Ice",new User("user2@gmail.com")));
+        teamList.add(new Team("Joker Team","J for Joker",new User("user2@gmail.com")));
     }
 
 

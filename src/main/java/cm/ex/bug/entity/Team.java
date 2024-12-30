@@ -30,20 +30,38 @@ public class Team {
 
     private LocalDateTime updatedAt;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "leader_id", referencedColumnName = "id")
     private User leader;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+//    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "team__members",
             joinColumns = @JoinColumn(name = "team_id", updatable = true),
             inverseJoinColumns = @JoinColumn(name = "member_id", updatable = true))
     private Set<User> teamMembers = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+//    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "team__invitation",
             joinColumns = @JoinColumn(name = "team_id", updatable = true),
             inverseJoinColumns = @JoinColumn(name = "member_id", updatable = true))
     private Set<User> teamInvitations = new HashSet<>();
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public Team(String name, String description, User leader) {
+        this.name = name;
+        this.description = description;
+        this.leader = leader;
+    }
 }

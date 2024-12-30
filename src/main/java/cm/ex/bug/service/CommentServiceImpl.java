@@ -61,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public BasicResponse updateComment(CommentRequest commentRequest) {
         User commenter = getLoggedInUser();
-        Optional<Comment> userComment = commentRepository.findById(UUID.fromString(commentRequest.getCommenterId()));
+        Optional<Comment> userComment = commentRepository.findById(commentRequest.getId());
         if (userComment.isEmpty()) throw new NoSuchElementException("Comment not found");
 
         List<Comment> commentList = commentRepository.findByCommenter(commenter);

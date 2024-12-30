@@ -61,7 +61,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         userData.setPassword(passwordEncoder.encode(userData.getPassword()));
         userData.setAuthoritySet(Set.of(authorityRepository.findByAuthority("user").get()));
 
-        if (!Objects.requireNonNull(profileImage.getOriginalFilename()).isEmpty()){
+        Optional<User> checkUserEmail = userRepository.findByEmail(user.getEmail());
+        if(checkUserEmail.isPresent()) throw new AccessDeniedException("This email is already in use");
+
+        if (profileImage != null) {
+            // && !Objects.requireNonNull(profileImage.getOriginalFilename()).isEmpty()
             File profile = fileService.addFile(profileImage);
             userData.setProfileUrl("http://localhost:8080/image/" + profile.getId());
         }
@@ -76,7 +80,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (userEmail.isEmpty() || !passwordEncoder.matches(user.getPassword(), userEmail.get().getPassword()))
             return BasicResponse.builder().status(false).code(401).message("Email or password doesn't match").build();
 
-        UserAuth userAuth = new UserAuth(user.getId().toString(), true, user.getEmail(), user.getPassword(), null, user.getPassword(), convertToGrantedAuthorities(userEmail.get().
+        UserAuth userAuth = new UserAuth(userEmail.get().getId().toString(), true, user.getEmail(), user.getPassword(), null, userEmail.get().getName(), convertToGrantedAuthorities(userEmail.get().
                 getAuthoritySet()), null);
         String jwtToken = jwtService.generateToken(userAuth);
 
@@ -129,7 +133,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         User user = getUserById(userId);
         DataHolder role = getRole(roleName);
 
-        if(!team.getLeader().equals(leader)) throw new AccessDeniedException("Access denied");
+        if (!team.getLeader().equals(leader)) throw new AccessDeniedException("Access denied");
         teamRoleRepository.save(new TeamRole(user, team, role));
 
         return BasicResponse.builder().status(true).result(true).code(200).message("Team member has been successfully assigned a role").build();
@@ -241,8 +245,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     public DataHolder getRole(String roleName) {
-        Optional<DataHolder> role = dataHolderRepository.findByNameAndType(roleName,"role");
-        if(role.isEmpty()) throw new NoSuchElementException("Team role not found");
+        Optional<DataHolder> role = dataHolderRepository.findByNameAndType(roleName, "role");
+        if (role.isEmpty()) throw new NoSuchElementException("Team role not found");
         return role.get();
     }
 

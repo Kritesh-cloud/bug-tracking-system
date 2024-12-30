@@ -33,7 +33,11 @@ public class SecurityConfiguration {
                         .requestMatchers("/test").permitAll()
                         .requestMatchers("/signIn").permitAll()
                         .requestMatchers("/signUp").permitAll()
+                        .requestMatchers("/signUpImage").permitAll()
                         .requestMatchers("image/{imageId}").permitAll()
+
+                        .requestMatchers("/list-user").permitAll()
+                        .requestMatchers("/get-user/{userId}").permitAll()
 
                         .anyRequest().authenticated()
                 )

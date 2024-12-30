@@ -1,5 +1,6 @@
 package cm.ex.bug.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -9,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@NotNull
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class BasicResponse {
 
     private boolean status;

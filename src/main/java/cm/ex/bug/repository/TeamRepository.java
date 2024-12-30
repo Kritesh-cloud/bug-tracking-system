@@ -26,4 +26,7 @@ public interface TeamRepository extends JpaRepository<Team, UUID> {
             "WHERE u.id = :#{#user.id}", nativeQuery = true)
     List<Team> findTeamsByInvitationUser(@Param("user") User user);
 
+
+
+
 }

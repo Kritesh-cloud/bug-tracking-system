@@ -53,7 +53,8 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public List<TeamResponse> listTeamByUser() {
         User user = getLoggedInUser();
-        List<Team> teamList = teamRepository.findByTeamMembersContainingOrderByUpdatedAtAsc(user);
+        List<Team> teamList = teamRepository.findByLeaderOrderByUpdatedAtAsc(user);
+        System.out.println("teamList count " + teamList.size());
         List<TeamResponse> teamResponseList = teamList.stream().map(
                 team -> {
                     TeamResponse teamResponse = modelMapper.map(team, TeamResponse.class);
@@ -91,7 +92,12 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public TeamResponse getTeamDetailById(String teamId) {
-        return modelMapper.map(getTeamById(teamId), TeamResponse.class);
+        Team team = getTeamById(teamId);
+        TeamResponse teamResponse = modelMapper.map(team, TeamResponse.class);
+        teamResponse.setLeader(userRemovePassword(teamResponse.getLeader()));
+        teamResponse.setTeamMembers(userListRemovePassword(teamResponse.getTeamMembers()));
+        teamResponse.setTeamInvitations(userListRemovePassword(teamResponse.getTeamInvitations()));
+        return teamResponse;
     }
 
     @Override
@@ -187,8 +193,9 @@ public class TeamServiceImpl implements TeamService {
     public BasicResponse deleteTeam(String teamId) throws AccessDeniedException {
         User user = getLoggedInUser();
         Team team = getTeamById(teamId);
-        if (!team.getLeader().equals(user)) throw new AccessDeniedException("Unauthorized to delete team");
 
+        System.out.println("!team.getLeader().getId().equals(user.getId()): "+!team.getLeader().getId().equals(user.getId()));
+        if (!team.getLeader().getId().equals(user.getId())) throw new AccessDeniedException("Unauthorized to delete team");
         teamRepository.delete(team);
         return BasicResponse.builder().status(true).result(false).code(200).message("Team deleted successfully").build();
 

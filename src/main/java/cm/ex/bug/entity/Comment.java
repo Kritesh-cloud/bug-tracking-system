@@ -24,11 +24,11 @@ public class Comment {
 
     private String content;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "commenter_id", referencedColumnName = "id")
     private User commenter;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "report_id", referencedColumnName = "id")
     private Report report;
 
@@ -58,5 +58,16 @@ public class Comment {
         this.commenter = commenter;
         this.report = report;
         this.userMentions = userMentions;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

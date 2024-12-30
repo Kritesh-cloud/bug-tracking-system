@@ -1,5 +1,6 @@
 package cm.ex.bug.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
 
     @Id
@@ -34,7 +36,9 @@ public class User {
 
     private LocalDateTime updatedAt;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    //old code
+//    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user__authorities",
             joinColumns = @JoinColumn(name = "user_id", updatable = true),
             inverseJoinColumns = @JoinColumn(name = "authority_id", updatable = true))
@@ -53,5 +57,20 @@ public class User {
         this.password = password;
         this.profileUrl = profileUrl;
         this.authoritySet = authoritySet;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public User(String email) {
+        this.email = email;
     }
 }

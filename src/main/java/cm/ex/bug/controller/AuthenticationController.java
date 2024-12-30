@@ -1,5 +1,6 @@
 package cm.ex.bug.controller;
 
+import cm.ex.bug.entity.User;
 import cm.ex.bug.request.CreateUserRequest;
 import cm.ex.bug.response.BasicResponse;
 import cm.ex.bug.service.UserServiceImpl;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RequestMapping("")
 @RestController
@@ -27,8 +29,15 @@ public class AuthenticationController {
 
 
 
+    @GetMapping("/list-user")
+    public ResponseEntity<List<User>> listUser() {
+        return ResponseEntity.status(HttpStatusCode.valueOf(200)).body(userService.userList());
+    }
 
-
+    @GetMapping("/get-user/{userId}")
+    public ResponseEntity<User> getUser(@PathVariable String userId) {
+        return ResponseEntity.status(HttpStatusCode.valueOf(200)).body(userService.getUserById(userId));
+    }
 
     @PostMapping("/signUpImage")
     public ResponseEntity<BasicResponse> signUp(@RequestBody CreateUserRequest user, MultipartFile profileImage) throws IOException {

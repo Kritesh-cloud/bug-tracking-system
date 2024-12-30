@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.NotActiveException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -47,6 +48,7 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public BasicResponse createReport(CreateReportRequest reportData, MultipartFile... files) throws IOException {
         //transferring all string data from dto to report
+        validateReportData(reportData, true);
         Report report = modelMapper.map(reportData, Report.class);
         report.setId(null);
 
@@ -58,7 +60,7 @@ public class ReportServiceImpl implements ReportService {
         report.setStatus(getStatusByName("new"));
         report.setSeverity(getSeverityByName(reportData.getSeverity()));
         report.setPriority(getPriorityByName(reportData.getPriority()));
-        report.setDueDate(dateTimeConverter(reportData.getDueDate()));
+        report.setDueDate(reportData.getDueDate() != null ? dateTimeConverter(reportData.getDueDate()) : null);
 
         Set<File> fileSet = new HashSet<>();
         for (MultipartFile file : files) {
@@ -67,7 +69,7 @@ public class ReportServiceImpl implements ReportService {
             //saving file in repository and saving that file in has set at same time
             fileSet.add(fileRepository.save(savedFile));
         }
-        // using previously saved has set for saving file save in report
+
         report.setFileSet(fileSet);
         reportRepository.save(report);
         return BasicResponse.builder().status(true).result(true).code(200).message("Report created successfully").build();
@@ -90,12 +92,18 @@ public class ReportServiceImpl implements ReportService {
     public List<ReportResponse> listReportByTeam(String teamId) {
         Team team = getTeamById(teamId);
         List<Report> reportList = reportRepository.findByTeam(team);
+        System.out.println("reportListToResponse(reportList)");
+        for (ReportResponse rr : reportListToResponse(reportList)) {
+            System.out.println("rr: " + rr.toString());
+        }
         return reportList.isEmpty() ? List.of() : reportListToResponse(reportList);
     }
 
     //TODO work on progress
     @Override
     public BasicResponse updateReport(CreateReportRequest reportData, MultipartFile... files) throws IOException {
+        validateReportData(reportData, false);
+
         //transferring all string data from dto to report
         Report report = modelMapper.map(reportData, Report.class);
 
@@ -112,8 +120,6 @@ public class ReportServiceImpl implements ReportService {
         for (String removeFile : reportData.getRemoveFileIds()) {
             Optional<File> removeThisFile = fileRepository.findById(UUID.fromString(removeFile));
             if (removeThisFile.isEmpty()) throw new NotActiveException("File not found");
-
-
         }
 
         Set<File> fileSet = new HashSet<>(report.getFileSet());
@@ -142,7 +148,7 @@ public class ReportServiceImpl implements ReportService {
     public BasicResponse updateReportResolution(String reportId, String resolution) {
         Report report = getReportById(reportId);
         DataHolder dataResolution = getStatusByName(resolution);
-        report.setStatus(dataResolution);
+        report.setResolution(dataResolution);
         reportRepository.save(report);
         return BasicResponse.builder().status(true).result(true).code(200).message("Report resolution updated successfully").build();
     }
@@ -150,8 +156,8 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public BasicResponse updateReportPriority(String reportId, String priority) {
         Report report = getReportById(reportId);
-        DataHolder dataPriority = getStatusByName(priority);
-        report.setStatus(dataPriority);
+        DataHolder dataPriority = getPriorityByName(priority);
+        report.setPriority(dataPriority);
         reportRepository.save(report);
         return BasicResponse.builder().status(true).result(true).code(200).message("Report priority updated successfully").build();
     }
@@ -159,8 +165,8 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public BasicResponse updateReportSeverity(String reportId, String severity) {
         Report report = getReportById(reportId);
-        DataHolder dataSeverity = getStatusByName(severity);
-        report.setStatus(dataSeverity);
+        DataHolder dataSeverity = getSeverityByName(severity);
+        report.setSeverity(dataSeverity);
         reportRepository.save(report);
         return BasicResponse.builder().status(true).result(true).code(200).message("Report severity updated successfully").build();
     }
@@ -197,6 +203,19 @@ public class ReportServiceImpl implements ReportService {
         Report report = getReportById(reportId);
         reportRepository.delete(report);
         return BasicResponse.builder().status(true).result(false).code(200).message("Report removed successfully").build();
+    }
+
+    private void validateReportData(CreateReportRequest reportData, boolean create) throws IOException {
+        if (!create && reportData.getId().toString().isBlank()) throw new IOException("Please input report id");
+        if (reportData.getTitle().isBlank()) throw new IOException("Please input report title");
+        if (reportData.getDescription().isBlank()) throw new IOException("Please input report description");
+        if (reportData.getTeamId().isBlank()) throw new IOException("Please input report team id");
+        if (reportData.getPriority().isBlank()) throw new IOException("Please input priority id");
+        if (reportData.getSeverity().isBlank()) throw new IOException("Please input severity id");
+//        if(reportData.getStepsToReproduce().isBlank()) throw new IOException("Please input report id");
+//        if(reportData.getVersion().isBlank()) throw new IOException("Please input report id");
+//        if(reportData.getEnvironment().isBlank()) throw new IOException("Please input report id");
+//        if(reportData.getDueDate().isBlank()) throw new IOException("Please input report id");
     }
 
     private User userRemovePassword(User user) {
@@ -249,11 +268,11 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private DataHolder getSeverityByName(String name) {
-        return getDataHolderByName(name, "priority");
+        return getDataHolderByName(name, "severity");
     }
 
     private DataHolder getPriorityByName(String name) {
-        return getDataHolderByName(name, "severity");
+        return getDataHolderByName(name, "priority");
     }
 
     private DataHolder getDataHolderByName(String name, String type) {
@@ -271,8 +290,12 @@ public class ReportServiceImpl implements ReportService {
 
     private LocalDateTime dateTimeConverter(String strDateTime) {
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            return LocalDateTime.parse(strDateTime, formatter);
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate localDate = LocalDate.parse(strDateTime, formatter);
+            LocalDateTime localDateTime = localDate.atStartOfDay();
+//            System.out.println("LocalDateTime: " + localDateTime);
+            return localDateTime;
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Date time exception " + e);
         }
@@ -284,7 +307,7 @@ public class ReportServiceImpl implements ReportService {
         response.setReporterId(String.valueOf(report.getReporter().getId()));
         response.setTeamId(String.valueOf(report.getTeam().getId()));
         response.setStatus(report.getStatus().getName());
-        response.setResolution(report.getResolution().getName());
+        response.setResolution(report.getResolution() != null ? report.getResolution().getName() : null);
         response.setPriority(report.getPriority().getName());
         response.setSeverity(report.getSeverity().getName());
 
@@ -303,9 +326,9 @@ public class ReportServiceImpl implements ReportService {
     private List<ReportResponse> reportListToResponse(List<Report> reportList) {
         return reportList.stream()
                 .map(report -> {
+//                    System.out.println("report: "+report.toString());
                     return reportToResponse(report);
                 })
                 .toList();
     }
-
 }

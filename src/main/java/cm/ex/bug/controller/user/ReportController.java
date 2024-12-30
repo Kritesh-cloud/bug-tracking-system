@@ -3,7 +3,6 @@ package cm.ex.bug.controller.user;
 import cm.ex.bug.request.CreateReportRequest;
 import cm.ex.bug.response.BasicResponse;
 import cm.ex.bug.response.ReportResponse;
-import cm.ex.bug.response.TeamResponse;
 import cm.ex.bug.service.ReportServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
@@ -35,7 +34,7 @@ public class ReportController {
 
 
     @PostMapping("/create-report")
-    public ResponseEntity<BasicResponse> createReport(@RequestBody CreateReportRequest reportRequest, MultipartFile... files) throws IOException {
+    public ResponseEntity<BasicResponse> createReport(@RequestPart("reportRequest") CreateReportRequest reportRequest, @RequestPart("files") MultipartFile... files) throws IOException {
         BasicResponse response = reportService.createReport(reportRequest, files);
         return ResponseEntity.status(HttpStatusCode.valueOf(response.getCode())).body(response);
     }
@@ -51,7 +50,7 @@ public class ReportController {
     }
 
     @PostMapping("/update-report")
-    public ResponseEntity<BasicResponse> updateReport(@RequestBody CreateReportRequest reportRequest, MultipartFile... files) throws IOException {
+    public ResponseEntity<BasicResponse> updateReport(@RequestPart("reportRequest") CreateReportRequest reportRequest, @RequestPart("files") MultipartFile... files) throws IOException {
         BasicResponse response = reportService.updateReport(reportRequest, files);
         return ResponseEntity.status(HttpStatusCode.valueOf(response.getCode())).body(response);
     }
@@ -93,7 +92,7 @@ public class ReportController {
     }
 
     @PostMapping("/remove-report/{reportId}")
-    public ResponseEntity<BasicResponse> removeReport(String reportId) {
+    public ResponseEntity<BasicResponse> removeReport(@PathVariable String reportId) {
         BasicResponse response = reportService.removeReport(reportId);
         return ResponseEntity.status(HttpStatusCode.valueOf(response.getCode())).body(response);
     }

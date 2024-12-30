@@ -6,6 +6,7 @@ import cm.ex.bug.entity.Team;
 import cm.ex.bug.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,9 +18,11 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
     List<Comment> findByCommenter(User commenter);
 
-    @Query(nativeQuery = true, value = "SELECT c FROM comment c WHERE c.report = :report ORDER BY c.createdAt ASC")
-    List<Comment> findByReport(Report report);
+//    @Query(nativeQuery = true, value = "SELECT c FROM comment c WHERE c.report = :report ORDER BY c.createdAt ASC")
+//    List<Comment> findByReport(Report report);
 
+    @Query("SELECT c FROM Comment c WHERE c.report = :report ORDER BY c.createdAt DESC")
+    List<Comment> findByReport(@Param("report") Report report);
 //    List<Comment> findByTeam(Team team);
 
     List<Comment> findByCommenterAndReport(User commenter, Report report);

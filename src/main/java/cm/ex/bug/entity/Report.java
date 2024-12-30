@@ -26,11 +26,11 @@ public class Report {
 
     private String description;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "reporter_id", referencedColumnName = "id")
     private User reporter;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "team_id", referencedColumnName = "id")
     private Team team;
 
@@ -40,19 +40,19 @@ public class Report {
             inverseJoinColumns = @JoinColumn(name = "user_id", updatable = true))
     private Set<User> assignees = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "status_id", referencedColumnName = "id")
     private DataHolder status;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "resolution_id", referencedColumnName = "id")
     private DataHolder resolution;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "priority_id", referencedColumnName = "id")
     private DataHolder priority;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "severity_id", referencedColumnName = "id")
     private DataHolder severity;
 
